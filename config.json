@@ -1,0 +1,13 @@
+{
+  "webhooks": [
+    {
+      "url": "https://discord.com/api/webhooks/1506930175085121688/Biqr9GKKjWfyVWCC0pKnOrsnuaFmxWS7Po8MkoubpzN8vuKPXkYUPpKI_RhJ3TFFHrv6",
+      "active": true
+    }
+  ],
+  "websocket": {
+    "url": "wss://stream.solsstattracker.com/global-messages/embed",
+    "initialReconnectDelayMillis": 1000,
+    "maxReconnectDelayMillis": 30000
+  }
+}

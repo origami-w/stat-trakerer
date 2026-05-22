@@ -1,0 +1,16 @@
+{
+  "name": "sols-stat-tracker-feed",
+  "version": "1.0.0",
+  "description": "Listens to a WebSocket for Sols Stat Tracker global messages and forwards them to the specified Discord webhooks.",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "@discordjs/rest": "^2.6.1",
+    "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
