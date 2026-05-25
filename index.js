@@ -94,13 +94,16 @@ ws.on('message', (data) => {
 
     const fullName = embed.author?.name;
 
-    // extract username inside parentheses
-    const match = fullName?.match(/\(([^)]+)\)/);
+    // try format: DisplayName(@Username)
+    let usernameMatch = fullName?.match(/\(@?([^)]+)\)/);
 
-    // clean username
-    const username = match
-      ? match[1]
-          .replace("@", "")
+    // fallback format: @Username
+    if (!usernameMatch) {
+      usernameMatch = fullName?.match(/^@?(.+)$/);
+    }
+
+    const username = usernameMatch
+      ? usernameMatch[1]
           .trim()
           .toLowerCase()
       : null;
@@ -121,7 +124,12 @@ ws.on('message', (data) => {
       "miyamii0"
     ];
 
-    // only pass if in list
+    // debug logs
+    console.log("FULL:", fullName);
+    console.log("USER:", username);
+    console.log("ALLOWED:", allowedUsers.includes(username));
+
+    // only pass if allowed
     if (!username || !allowedUsers.includes(username)) return;
 
     enqueue(embed);
