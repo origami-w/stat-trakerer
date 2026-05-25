@@ -88,7 +88,7 @@ const connect = () => {
     reconnectDelayMillis = config.websocket.initialReconnectDelayMillis;
   });
 
- ws.on('message', (data) => {
+ws.on('message', (data) => {
   try {
     const embed = JSON.parse(data.toString());
 
@@ -96,28 +96,36 @@ const connect = () => {
 
     // extract username inside parentheses
     const match = fullName?.match(/\(([^)]+)\)/);
-    const username = match ? match[1] : null;
 
-    // 🔥 allowed users list
+    // clean username
+    const username = match
+      ? match[1]
+          .replace("@", "")
+          .trim()
+          .toLowerCase()
+      : null;
+
+    // allowed users list
     const allowedUsers = [
       "jamal_1282",
-      "noobOOGAMI",
-      "Mainaccountgetban",
+      "nooboogami",
+      "mainaccountgetban",
       "friedchicken0808",
       "akdjsdjksk",
-      "AnantaYTID",
-      "BluwTUES",
+      "anantaytid",
+      "bluwtues",
       "alhasbi_17",
-      "StrawZheas",
-      "MaXaMGaming1207",
+      "strawzheas",
+      "maxamgaming1207",
       "cmk5xz",
-      "MiYamii0"
+      "miyamii0"
     ];
 
     // only pass if in list
     if (!username || !allowedUsers.includes(username)) return;
 
     enqueue(embed);
+
   } catch (error) {
     console.error('Failed to parse message:', error.message);
   }
