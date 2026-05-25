@@ -88,7 +88,7 @@ const connect = () => {
     reconnectDelayMillis = config.websocket.initialReconnectDelayMillis;
   });
 
-ws.on('message', (data) => {
+ws.on('message', async (data) => {
   try {
     const embed = JSON.parse(data.toString());
 
@@ -108,7 +108,7 @@ ws.on('message', (data) => {
           .toLowerCase()
       : null;
 
-    // allowed users list
+    // allowed users
     const allowedUsers = [
       "jamal_1282",
       "nooboogami",
@@ -124,14 +124,67 @@ ws.on('message', (data) => {
       "miyamii0"
     ];
 
-    // debug logs
-    console.log("FULL:", fullName);
-    console.log("USER:", username);
-    console.log("ALLOWED:", allowedUsers.includes(username));
-
-    // only pass if allowed
+    // block if not allowed
     if (!username || !allowedUsers.includes(username)) return;
 
+    // cute font converter
+    function toCuteFont(text) {
+      const normal = 'abcdefghijklmnopqrstuvwxyz';
+      const fancy  = '𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛';
+
+      return text.replace(/[a-z]/gi, c => {
+        const lower = c.toLowerCase();
+        const index = normal.indexOf(lower);
+
+        if (index === -1) return c;
+
+        return fancy[index];
+      });
+    }
+
+    // random messages
+    const messages = [
+      "ehhh? another one already~?",
+      "mouu... that's not fair...",
+      "waa... your luck is scary...",
+      "ehehe~ lucky again?",
+      "you're making me jealous...",
+      "ah— you actually got it...?!",
+      "mhm~ luck likes you today.",
+      "another global...? seriously~?",
+      "uwaa... that's super rare...",
+      "hehe... I knew you'd get one eventually.",
+      "eh...? that's kinda insane...",
+      "mm... you're unbelievable sometimes."
+    ];
+
+    const randomMessage =
+      messages[Math.floor(Math.random() * messages.length)];
+
+    const cuteMessage = toCuteFont(randomMessage);
+
+    // send cute reaction message first
+    for (const webhook of wehooks) {
+      try {
+        await rest.post(
+          Routes.webhook(webhook.id, webhook.token),
+          {
+            body: {
+              content: cuteMessage,
+              allowed_mentions: { parse: [] }
+            },
+            auth: false
+          }
+        );
+      } catch (error) {
+        console.error(
+          'Failed to send reaction message:',
+          error.message
+        );
+      }
+    }
+
+    // send original embed normally
     enqueue(embed);
 
   } catch (error) {
