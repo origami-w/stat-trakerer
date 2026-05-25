@@ -128,20 +128,21 @@ ws.on('message', async (data) => {
     if (!username || !allowedUsers.includes(username)) return;
 
     // cute font converter
-    function toCuteFont(text) {
-      const normal = 'abcdefghijklmnopqrstuvwxyz';
-      const fancy  = '𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛';
+  function toCuteFont(text) {
+    const map = {
+      a:"𝒂", b:"𝒃", c:"𝒄", d:"𝒅", e:"𝒆",
+      f:"𝒇", g:"𝒈", h:"𝒉", i:"𝒊", j:"𝒋",
+      k:"𝒌", l:"𝒍", m:"𝒎", n:"𝒏", o:"𝒐",
+      p:"𝒑", q:"𝒒", r:"𝒓", s:"𝒔", t:"𝒕",
+      u:"𝒖", v:"𝒗", w:"𝒘", x:"𝒙", y:"𝒚",
+      z:"𝒛"
+    };
 
-      return text.replace(/[a-z]/gi, c => {
-        const lower = c.toLowerCase();
-        const index = normal.indexOf(lower);
-
-        if (index === -1) return c;
-
-        return fancy[index];
-      });
-    }
-
+  return text.replace(/[a-z]/gi, char => {
+    const lower = char.toLowerCase();
+    return map[lower] || char;
+  });
+}
     // random messages
     const messages = [
       "ehhh? another one already~?",
