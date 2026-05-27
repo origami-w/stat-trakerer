@@ -145,19 +145,27 @@ ws.on('message', async (data) => {
 }
     // random messages
     const messages = [
-      "ehhh? another one already~?",
-      "mouu... that's not fair...",
-      "waa... your luck is scary...",
-      "ehehe~ lucky again?",
-      "you're making me jealous...",
-      "ah— you actually got it...?!",
-      "mhm~ luck likes you today.",
-      "another global...? seriously~?",
-      "uwaa... that's super rare...",
-      "hehe... I knew you'd get one eventually.",
-      "eh...? that's kinda insane...",
-      "mm... you're unbelievable sometimes."
-    ];
+  "h-hmph... another one already...?",
+  "mouu... that's not fair at all...",
+  "w-waa... your luck is ridiculous...",
+  "i-it's not like i'm surprised or anything...",
+  "s-stop getting lucky so often...",
+  "eh?! you actually got it...?!",
+  "hmph. luck just happened to like you today.",
+  "another global...? seriously...?",
+  "uwaa... t-that's super rare...",
+  "i knew you'd get one eventually... not that i cared.",
+  "eh...? that's actually kinda insane...",
+  "mm... you're unbelievable sometimes...",
+  "w-wait... 1 in HOW much?!",
+  "d-don't expect me to react every time, okay?",
+  "hmph... you just got lucky, that's all.",
+  "mouu~ save some luck for everyone else...",
+  "ehhh?! another global already?!",
+  "i-it's kinda cool... i guess.",
+  "waa... that's scary lucky...",
+  "hmph. show-off..."
+];
 
     const randomMessage =
       messages[Math.floor(Math.random() * messages.length)];
