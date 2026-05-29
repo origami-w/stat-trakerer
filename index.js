@@ -155,24 +155,22 @@ const connect = () => {
 
       // eden font converter
       function toEdenFont(text) {
-        const normal =
-          "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const map = {
+          A:"𝙰", B:"𝙱", C:"𝙲", D:"𝙳", E:"𝙴",
+          F:"𝙵", G:"𝙶", H:"𝙷", I:"𝙸", J:"𝙹",
+          K:"𝙺", L:"𝙻", M:"𝙼", N:"𝙽", O:"𝙾",
+          P:"𝙿", Q:"𝚀", R:"𝚁", S:"𝚂", T:"𝚃",
+          U:"𝚄", V:"𝚅", W:"𝚆", X:"𝚇", Y:"𝚈",
+          Z:"𝚉"
+        };
 
-        const eden =
-          "𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉";
+        return text.split("").map(char => {
+          if (map[char]) {
+            return map[char] + " ";
+          }
 
-        return text
-          .toUpperCase()
-          .split("")
-          .map((char) => {
-            const index =
-              normal.indexOf(char);
-
-            return index !== -1
-              ? eden[index]
-              : char;
-          })
-          .join(" ");
+          return char;
+        }).join("").replace(/\s([.?!,])/g, "$1");
       }
 
       // eden messages
@@ -222,11 +220,13 @@ const connect = () => {
           )
         ];
 
-      const styledMessage =
-        finalMessage ===
-        finalMessage.toUpperCase()
-          ? toEdenFont(finalMessage)
-          : finalMessage;
+      const isAllCaps =
+        /[A-Z]/.test(finalMessage) &&
+        finalMessage === finalMessage.toUpperCase();
+
+      const styledMessage = isAllCaps
+        ? toEdenFont(finalMessage)
+        : finalMessage;
 
       // send reaction message first
       for (const webhook of wehooks) {
