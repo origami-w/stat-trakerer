@@ -7,8 +7,7 @@ const config = require('./config.json');
 const WEBSOCKET_URL_REGEX = /^wss?:\/\//;
 const WEBHOOK_URL_REGEX = /(?<url>^https:\/\/(?:(?:canary|ptb).)?discord(?:app)?.com\/api(?:\/v\d+)?\/webhooks\/(?<id>\d+)\/(?<token>[\w-]+)\/?$)/;
 
-// Discord has a maximum of 10 embeds per message, so we batch them to avoid hitting that limit.
-// The buffer is flushed after a certain amount of time to ensure the messages can be sent even if the batch size isn't reached.
+// Discord has a maximum of 10 embeds per message
 const EMBED_BATCH_SIZE = 10;
 const FLUSH_DELAY_MILLIS = 30_000;
 
@@ -26,18 +25,17 @@ if (wehooks.length === 0) {
   process.exit(1);
 }
 
-wehooks
-  .forEach((webhook) => {
-    const match = WEBHOOK_URL_REGEX.exec(webhook.url)
+wehooks.forEach((webhook) => {
+  const match = WEBHOOK_URL_REGEX.exec(webhook.url);
 
-    if (!match) {
-      console.error(`Invalid webhook URL: ${webhook.url}`);
-      process.exit(1);
-    }
-    
-    webhook.id = match.groups.id;
-    webhook.token = match.groups.token;
-  });
+  if (!match) {
+    console.error(`Invalid webhook URL: ${webhook.url}`);
+    process.exit(1);
+  }
+
+  webhook.id = match.groups.id;
+  webhook.token = match.groups.token;
+});
 
 const rest = new REST();
 
@@ -51,135 +49,18 @@ const flush = () => {
   if (webhookEmbedBuffer.length === 0) return;
 
   do {
-    const webhookEmbedBatch = webhookEmbedBuffer.splice(0, EMBED_BATCH_SIZE);
+    const webhookEmbedBatch = webhookEmbedBuffer.splice(
+      0,
+      EMBED_BATCH_SIZE
+    );
 
     wehooks.forEach(async (webhook) => {
-      try {
-        await rest.post(Routes.webhook(webhook.id, webhook.token), {
-          body: { embeds: webhookEmbedBatch, allowed_mentions: { parse: [] } },
-          auth: false
-        });
-      } catch (error) {
-        console.error('Failed to send webhook:', error.message);
-      }
-    });
-  } while (webhookEmbedBuffer.length >= EMBED_BATCH_SIZE);
-};
-
-const enqueue = (embed) => {
-  webhookEmbedBuffer.push(embed);
-
-  if (webhookEmbedBuffer.length >= EMBED_BATCH_SIZE) {
-    flush();
-  } else if (!flushTimer) {
-    flushTimer = setTimeout(flush, FLUSH_DELAY_MILLIS);
-  }
-};
-
-let ws;
-let reconnectDelayMillis = config.websocket.initialReconnectDelayMillis;
-
-const connect = () => {
-  ws = new WebSocket(config.websocket.url);
-
-  ws.on('open', () => {
-    console.log(`Connected to WebSocket: ${config.websocket.url}`);
-
-    reconnectDelayMillis = config.websocket.initialReconnectDelayMillis;
-  });
-
-ws.on('message', async (data) => {
-  try {
-    const embed = JSON.parse(data.toString());
-
-    const fullName = embed.author?.name;
-
-    // try format: DisplayName(@Username)
-    let usernameMatch = fullName?.match(/\(@?([^)]+)\)/);
-
-    // fallback format: @Username
-    if (!usernameMatch) {
-      usernameMatch = fullName?.match(/^@?(.+)$/);
-    }
-
-    const username = usernameMatch
-      ? usernameMatch[1]
-          .trim()
-          .toLowerCase()
-      : null;
-
-    // allowed users
-    const allowedUsers = [
-      "jamal_1282",
-      "nooboogami",
-      "mainaccountgetban",
-      "friedchicken0808",
-      "akdjsdjksk",
-      "anantaytid",
-      "bluwtues",
-      "alhasbi_17",
-      "strawzheas",
-      "maxamgaming1207",
-      "cmk5xz",
-      "miyamii0"
-    ];
-
-    // block if not allowed
-    if (!username || !allowedUsers.includes(username)) return;
-
-    // cute font converter
-  function toCuteFont(text) {
-    const map = {
-      a:"𝒂", b:"𝒃", c:"𝒄", d:"𝒅", e:"𝒆",
-      f:"𝒇", g:"𝒈", h:"𝒉", i:"𝒊", j:"𝒋",
-      k:"𝒌", l:"𝒍", m:"𝒎", n:"𝒏", o:"𝒐",
-      p:"𝒑", q:"𝒒", r:"𝒓", s:"𝒔", t:"𝒕",
-      u:"𝒖", v:"𝒗", w:"𝒘", x:"𝒙", y:"𝒚",
-      z:"𝒛"
-    };
-
-  return text.replace(/[a-z]/gi, char => {
-    const lower = char.toLowerCase();
-    return map[lower] || char;
-  });
-}
-    // random messages
-    const messages = [
-  "h-hmph... another one already...?",
-  "mouu... that's not fair at all...",
-  "w-waa... your luck is ridiculous...",
-  "i-it's not like i'm surprised or anything...",
-  "s-stop getting lucky so often...",
-  "eh?! you actually got it...?!",
-  "hmph. luck just happened to like you today.",
-  "another global...? seriously...?",
-  "uwaa... t-that's super rare...",
-  "i knew you'd get one eventually... not that i cared.",
-  "eh...? that's actually kinda insane...",
-  "mm... you're unbelievable sometimes...",
-  "w-wait... 1 in HOW much?!",
-  "d-don't expect me to react every time, okay?",
-  "hmph... you just got lucky, that's all.",
-  "mouu~ save some luck for everyone else...",
-  "ehhh?! another global already?!",
-  "i-it's kinda cool... i guess.",
-  "waa... that's scary lucky...",
-  "hmph. show-off..."
-];
-
-    const randomMessage =
-      messages[Math.floor(Math.random() * messages.length)];
-
-    const cuteMessage = toCuteFont(randomMessage);
-
-    // send cute reaction message first
-    for (const webhook of wehooks) {
       try {
         await rest.post(
           Routes.webhook(webhook.id, webhook.token),
           {
             body: {
-              content: cuteMessage,
+              embeds: webhookEmbedBatch,
               allowed_mentions: { parse: [] }
             },
             auth: false
@@ -187,28 +68,231 @@ ws.on('message', async (data) => {
         );
       } catch (error) {
         console.error(
-          'Failed to send reaction message:',
+          'Failed to send webhook:',
           error.message
         );
       }
-    }
+    });
+  } while (
+    webhookEmbedBuffer.length >= EMBED_BATCH_SIZE
+  );
+};
 
-    // send original embed normally
-    enqueue(embed);
+const enqueue = (embed) => {
+  webhookEmbedBuffer.push(embed);
 
-  } catch (error) {
-    console.error('Failed to parse message:', error.message);
+  if (
+    webhookEmbedBuffer.length >= EMBED_BATCH_SIZE
+  ) {
+    flush();
+  } else if (!flushTimer) {
+    flushTimer = setTimeout(
+      flush,
+      FLUSH_DELAY_MILLIS
+    );
   }
-});
-  ws.on('error', (error) => console.error('WebSocket error:', error.message));
+};
+
+let ws;
+let reconnectDelayMillis =
+  config.websocket.initialReconnectDelayMillis;
+
+const connect = () => {
+  ws = new WebSocket(config.websocket.url);
+
+  ws.on('open', () => {
+    console.log(
+      `Connected to WebSocket: ${config.websocket.url}`
+    );
+
+    reconnectDelayMillis =
+      config.websocket.initialReconnectDelayMillis;
+  });
+
+  ws.on('message', async (data) => {
+    try {
+      const embed = JSON.parse(data.toString());
+
+      const fullName = embed.author?.name;
+
+      // try format: DisplayName(@Username)
+      let usernameMatch =
+        fullName?.match(/\(@?([^)]+)\)/);
+
+      // fallback format: @Username
+      if (!usernameMatch) {
+        usernameMatch =
+          fullName?.match(/^@?(.+)$/);
+      }
+
+      const username = usernameMatch
+        ? usernameMatch[1]
+            .trim()
+            .toLowerCase()
+        : null;
+
+      // allowed users
+      const allowedUsers = [
+        "jamal_1282",
+        "nooboogami",
+        "mainaccountgetban",
+        "friedchicken0808",
+        "akdjsdjksk",
+        "anantaytid",
+        "bluwtues",
+        "alhasbi_17",
+        "strawzheas",
+        "maxamgaming1207",
+        "cmk5xz",
+        "miyamii0"
+      ];
+
+      // block if not allowed
+      if (
+        !username ||
+        !allowedUsers.includes(username)
+      ) return;
+
+      // eden font converter
+      function toEdenFont(text) {
+        const normal =
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        const eden =
+          "𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉";
+
+        return text
+          .toUpperCase()
+          .split("")
+          .map((char) => {
+            const index =
+              normal.indexOf(char);
+
+            return index !== -1
+              ? eden[index]
+              : char;
+          })
+          .join(" ");
+      }
+
+      // eden messages
+      const messages = [
+        "Another one.",
+        "Again?",
+        "Still alive?",
+        "Not even close.",
+        "Below expectations.",
+        "Pathetic.",
+        "That's no fun.",
+        "Interesting.",
+        "This again.",
+        "Another target.",
+        "Let's finish this quickly.",
+        "Nowhere to run.",
+        "You survived.",
+        "Barely worth noticing.",
+        "Lucky.",
+        "Try harder.",
+        "Unexpected.",
+        "That's that.",
+        "How annoying.",
+        "Another feast.",
+        "FEED ME.",
+        "I NEED MORE.",
+        "NOWHERE TO HIDE.",
+        "VANISH.",
+        "MAY YOUR LUCK BE CURSED.",
+        "ANOTHER FEAST.",
+        "BEGONE."
+      ];
+
+      // 70% chance to speak
+      const shouldSpeak =
+        Math.random() < 0.7;
+
+      if (!shouldSpeak) {
+        enqueue(embed);
+        return;
+      }
+
+      const finalMessage =
+        messages[
+          Math.floor(
+            Math.random() * messages.length
+          )
+        ];
+
+      const styledMessage =
+        finalMessage ===
+        finalMessage.toUpperCase()
+          ? toEdenFont(finalMessage)
+          : finalMessage;
+
+      // send reaction message first
+      for (const webhook of wehooks) {
+        try {
+          await rest.post(
+            Routes.webhook(
+              webhook.id,
+              webhook.token
+            ),
+            {
+              body: {
+                content: styledMessage,
+                allowed_mentions: {
+                  parse: []
+                }
+              },
+              auth: false
+            }
+          );
+        } catch (error) {
+          console.error(
+            'Failed to send reaction message:',
+            error.message
+          );
+        }
+      }
+
+      // send original embed normally
+      enqueue(embed);
+
+    } catch (error) {
+      console.error(
+        'Failed to parse message:',
+        error.message
+      );
+    }
+  });
+
+  ws.on('error', (error) =>
+    console.error(
+      'WebSocket error:',
+      error.message
+    )
+  );
 
   ws.on('close', (code, reason) => {
-    console.log(`Closed WebSocket (${code}): ${reason}`);
-    console.log(`Reconnecting WebSocket in ${reconnectDelayMillis / 1000} seconds...`);
+    console.log(
+      `Closed WebSocket (${code}): ${reason}`
+    );
 
-    setTimeout(connect, reconnectDelayMillis);
-    reconnectDelayMillis = Math.min(reconnectDelayMillis * 2, config.websocket.maxReconnectDelayMillis);
+    console.log(
+      `Reconnecting WebSocket in ${
+        reconnectDelayMillis / 1000
+      } seconds...`
+    );
+
+    setTimeout(
+      connect,
+      reconnectDelayMillis
+    );
+
+    reconnectDelayMillis = Math.min(
+      reconnectDelayMillis * 2,
+      config.websocket.maxReconnectDelayMillis
+    );
   });
-}
+};
 
 connect();
