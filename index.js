@@ -88,4 +88,112 @@ const enqueue = (embed) => {
 function toEdenFont(text) {
   const map = {
     a:"𝙰", b:"𝙱", c:"𝙲", d:"𝙳", e:"𝙴", f:"𝙵", g:"𝙶", h:"𝙷", i:"𝙸", j:"𝙹",
-    k:"𝙺", l:"𝙻", m:"𝙼", n:"𝙽", o:"𝙾", p:"𝙿", q:"𝚀", r:"𝚁", s
+    k:"𝙺", l:"𝙻", m:"𝙼", n:"𝙽", o:"𝙾", p:"𝙿", q:"𝚀", r:"𝚁", s:"𝚂", t:"𝚃",
+    u:"𝚄", v:"𝚅", w:"𝚆", x:"𝚇", y:"𝚈", z:"𝚉"
+  };
+
+  // Converts letters and adds clean spacing after every character cleanly
+  return text
+    .split("")
+    .map(char => {
+      const lower = char.toLowerCase();
+      const transformed = map[lower] ? map[lower] : char;
+      return transformed + " ";
+    })
+    .join("")
+    .replace(/\s+([.?!,])/g, "$1") // Cleans spaces right before punctuation
+    .trim();
+}
+
+const messages = [
+  "Another one.", "Again?", "Still alive?", "Not even close.", "Below expectations.",
+  "Pathetic.", "That's no fun.", "Interesting.", "This again.", "Another target.",
+  "Let's finish this quickly.", "Nowhere to run.", "You survived.", "Barely worth noticing.",
+  "Lucky.", "Try harder.", "Unexpected.", "That's that.", "How annoying.", "Another feast.",
+  "FEED ME.", "I NEED MORE.", "NOWHERE TO HIDE.", "VANISH.", "MAY YOUR LUCK BE CURSED.",
+  "ANOTHER FEAST.", "BEGONE."
+];
+
+const allowedUsers = [
+  "jamal_1282", "nooboogami", "mainaccountgetban", "friedchicken0808", "akdjsdjksk",
+  "anantaytid", "bluwtues", "alhasbi_17", "strawzheas", "maxamgaming1207", "cmk5xz", "miyamii0"
+];
+
+// --- WebSocket Connection ---
+
+let ws;
+const initialDelay = config.websocket?.initialReconnectDelayMillis ?? 5000;
+const maxDelay = config.websocket?.maxReconnectDelayMillis ?? 60000;
+let reconnectDelayMillis = initialDelay;
+
+const connect = () => {
+  ws = new WebSocket(websocketUrl);
+
+  ws.on('open', () => {
+    console.log(`Connected to WebSocket: ${websocketUrl}`);
+    reconnectDelayMillis = initialDelay; // Reset backoff timer on successful link
+  });
+
+  ws.on('message', async (data) => {
+    try {
+      const embed = JSON.parse(data.toString());
+      const fullName = embed.author?.name;
+
+      if (!fullName || typeof fullName !== 'string') return;
+
+      let usernameMatch = fullName.match(/\(@?([^)]+)\)/);
+
+      if (!usernameMatch) {
+        usernameMatch = fullName.match(/^@?(.+)$/);
+      }
+
+      const username = usernameMatch
+        ? usernameMatch[1].trim().toLowerCase()
+        : null;
+
+      // Filter out unrecognized players
+      if (!username || !allowedUsers.includes(username)) return;
+
+      // 70% chance to send character dialogue
+      if (Math.random() <= 0.70) {
+        const finalMessage = messages[Math.floor(Math.random() * messages.length)];
+        const styledMessage = toEdenFont(finalMessage);
+
+        for (const webhook of wehooks) {
+          try {
+            await rest.post(
+              Routes.webhook(webhook.id, webhook.token),
+              {
+                body: {
+                  content: styledMessage,
+                  allowed_mentions: { parse: [] }
+                },
+                auth: false
+              }
+            );
+          } catch (error) {
+            console.error(`Failed to send flavor text to webhook ${webhook.id}:`, error.message);
+          }
+        }
+      }
+
+      // Enqueue the original global broadcast embed safely
+      enqueue(embed);
+
+    } catch (error) {
+      console.error('Failed to process incoming event data:', error.message);
+    }
+  });
+
+  ws.on('error', (error) => console.error('WebSocket connection error:', error.message));
+
+  ws.on('close', (code, reason) => {
+    console.log(`Closed WebSocket (${code}): ${reason || 'No reason provided'}`);
+    console.log(`Reconnecting WebSocket in ${reconnectDelayMillis / 1000} seconds...`);
+
+    setTimeout(connect, reconnectDelayMillis);
+    reconnectDelayMillis = Math.min(reconnectDelayMillis * 2, maxDelay); // Exponential backoff
+  });
+};
+
+connect();
