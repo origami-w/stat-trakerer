@@ -155,14 +155,20 @@ const connect = () => {
 
       // eden font converter
       function toEdenFont(text) {
-        const map = {
-          A:"𝙰", B:"𝙱", C:"𝙲", D:"𝙳", E:"𝙴",
-          F:"𝙵", G:"𝙶", H:"𝙷", I:"𝙸", J:"𝙹",
-          K:"𝙺", L:"𝙻", M:"𝙼", N:"𝙽", O:"𝙾",
-          P:"𝙿", Q:"𝚀", R:"𝚁", S:"𝚂", T:"𝚃",
-          U:"𝚄", V:"𝚅", W:"𝚆", X:"𝚇", Y:"𝚈",
-          Z:"𝚉"
-        };
+      const map = {
+        a:"𝙰", b:"𝙱", c:"𝙲", d:"𝙳", e:"𝙴",
+        f:"𝙵", g:"𝙶", h:"𝙷", i:"𝙸", j:"𝙹",
+        k:"𝙺", l:"𝙻", m:"𝙼", n:"𝙽", o:"𝙾",
+        p:"𝙿", q:"𝚀", r:"𝚁", s:"𝚂", t:"𝚃",
+        u:"𝚄", v:"𝚅", w:"𝚆", x:"𝚇", y:"𝚈",
+        z:"𝚉"
+      };
+
+  return text.replace(/[a-z]/gi, char => {
+    const lower = char.toLowerCase();
+    return map[lower] ? map[lower] + " " : char;
+  }).replace(/\s([.?!,])/g, "$1");
+}
 
         return text.split("").map(char => {
           if (map[char]) {
@@ -205,13 +211,7 @@ const connect = () => {
       ];
 
       // 70% chance to speak
-      const shouldSpeak =
-        Math.random() < 0.7;
-
-      if (!shouldSpeak) {
-        enqueue(embed);
-        return;
-      }
+     
 
       const finalMessage =
         messages[
@@ -220,14 +220,7 @@ const connect = () => {
           )
         ];
 
-      const isAllCaps =
-        /[A-Z]/.test(finalMessage) &&
-        finalMessage === finalMessage.toUpperCase();
-
-      const styledMessage = isAllCaps
-        ? toEdenFont(finalMessage)
-        : finalMessage;
-
+      const styledMessage = toEdenFont(finalMessage);
       // send reaction message first
       for (const webhook of wehooks) {
         try {
