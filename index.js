@@ -116,7 +116,7 @@ const messages = [
 
 const allowedUsers = [
   "jamal_1282", "nooboogami", "mainaccountgetban", "friedchicken0808", "akdjsdjksk",
-  "anantaytid", "bluwtues", "alhasbi_17", "strawzheas", "maxamgaming1207", "cmk5xz", "miyamii0"
+  "anantaytid", "bluwtues", "alhasbi_17", "strawzheas", "maxamgaming1207", "cmk5xz", "miyamii0","adifaardani"
 ];
 
 // --- WebSocket Connection ---
@@ -155,7 +155,7 @@ const connect = () => {
       if (!username || !allowedUsers.includes(username)) return;
 
       // 70% chance to send character dialogue
-      if (Math.random() <= 0.70) {
+      if (Math.random() <= 1) {
         const finalMessage = messages[Math.floor(Math.random() * messages.length)];
         const styledMessage = toEdenFont(finalMessage);
 
