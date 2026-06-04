@@ -106,12 +106,12 @@ function toEdenFont(text) {
 }
 
 const messages = [
-  "Another one.", "Again?", "Still alive?", "Not even close.", "Below expectations.",
-  "Pathetic.", "That's no fun.", "Interesting.", "This again.", "Another target.",
-  "Let's finish this quickly.", "Nowhere to run.", "You survived.", "Barely worth noticing.",
-  "Lucky.", "Try harder.", "Unexpected.", "That's that.", "How annoying.", "Another feast.",
-  "FEED ME.", "I NEED MORE.", "NOWHERE TO HIDE.", "VANISH.", "MAY YOUR LUCK BE CURSED.",
-  "ANOTHER FEAST.", "BEGONE."
+  "Another fools.", "Again?", "Still trying?", "Not even close.", "Below expectations.",
+  "Pathetic.", "Don't get so cocky.", "Interesting.", "This again? fools.", "Another trash.",
+  "Let's finish this quickly.", "Not even worth it.", "You survived, but not for so long.", "Barely worth noticing.",
+  "Lucky.", "Try harder.", "Expected, fools.", "That's that.", "How annoying.", "Another feast.",
+  "FEED ME.", "I NEED MORE.", "Pathetic...as usual.", "VANISH.", "MAY YOUR LUCK BE CURSED.",
+  "ANOTHER FEAST.", "BEGONE.","The void don't feed me enough",
 ];
 
 const allowedUsers = [
