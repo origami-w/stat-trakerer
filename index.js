@@ -50,19 +50,16 @@ const flush = async () => {
 
   if (webhookEmbedBuffer.length === 0) return;
 
-  // CRITICAL FIX: Immediately extract all items to prevent race conditions during awaits
   const itemsToFlush = webhookEmbedBuffer.splice(0, webhookEmbedBuffer.length);
 
   while (itemsToFlush.length > 0) {
     const batch = itemsToFlush.splice(0, EMBED_BATCH_SIZE);
 
-    // Separate payloads out into text payloads and embed payloads
     const embedsOnly = batch.filter(item => !item.content);
     const textsOnly = batch.filter(item => item.content);
 
     for (const webhook of wehooks) {
       try {
-        // 1. Process Embed Batches safely
         if (embedsOnly.length > 0) {
           await rest.post(
             Routes.webhook(webhook.id, webhook.token),
@@ -76,7 +73,6 @@ const flush = async () => {
           );
         }
 
-        // 2. Process Text Batches sequentially to avoid 429 spam
         for (const textItem of textsOnly) {
           await rest.post(
             Routes.webhook(webhook.id, webhook.token),
@@ -108,33 +104,43 @@ const enqueue = (item) => {
 
 // --- Helper Utilities ---
 
+/**
+ * Updated to mimic the applied CSS: 
+ * Forces an italic math-serif/mono conversion and adds standard Discord markdown 
+ * for italics (*) to ensure clients render it properly.
+ */
 function toEdenFont(text) {
+  // Unicode mathematical monospace mapping for lowercase/uppercase & punctuation overrides
   const map = {
-    a:"𝙰", b:"𝙱", c:"𝙲", d:"𝙳", e:"𝙴", f:"𝙵", g:"𝙶", h:"𝙷", i:"𝙸", j:"𝙹",
-    k:"𝙺", l:"𝙻", m:"𝙼", n:"𝙽", o:"𝙾", p:"𝙿", q:"𝚀", r:"𝚁", s:"𝚂", t:"𝚃",
-    u:"𝚄", v:"𝚅", w:"𝚆", x:"𝚇", y:"𝚈", z:"𝚉"
+    a:"𝘢", b:"𝘣", c:"𝘤", d:"𝘥", e:"𝘦", f:"𝘧", g:"𝘨", h:"𝘩", i:"𝘪", j:"𝘫",
+    k:"𝘬", l:"𝘭", m:"𝘮", n:"𝘯", o:"𝘰", p:"𝘱", q:"𝘲", r:"𝘳", s:"𝘴", t:"𝘵",
+    u:"𝘶", v:"𝘷", w:"𝘸", x:"𝘹", y:"𝘺", z:"𝘻",
+    A:"𝘈", B:"𝘉", C:"𝘊", D:"𝘲", E:"𝘌", F:"𝘍", G:"𝘎", H:"𝘏", I:"𝘐", J:"𝘑",
+    K:"𝘒", L:"𝘓", M:"𝘔", N:"𝘕", O:"𝘖", P:"𝘗", Q:"𝘘", R:"𝘙", S:"𝘚", T:"𝘛",
+    U:"𝘜", V:"𝘵", W:"𝘞", X:"𝘟", Y:"𝘠", Z:"𝘡",".":"．", ",":"，","'":"＇", "?":"？","█":"██"
   };
 
-  return text
+  const convertedText = text
     .split("")
     .map(char => {
-      const lower = char.toLowerCase();
-      const transformed = map[lower] ? map[lower] : char;
-      return transformed + " ";
+      const transformed = map[char] ? map[char] : char;
+      // Appends a space after every character to match your previous layout structure
+      return transformed + " "; 
     })
     .join("")
     .replace(/\s+([.?!,])/g, "$1") 
     .trim();
+
+  // Wrapping in Discord italic markdown tags '*' to complement the global italic config rule 
+  return `*${convertedText}*`;
 }
 
 const messages = [
-  "Another fools.", "Again?", "Still trying?", "Not even close.", "Below expectations.",
-  "Pathetic.", "Don't get so cocky.", "Interesting.", "This again? fools.", "Another trash.",
-  "Let's finish this quickly.", "Not even worth it.", "You survived, but not for so long.", "Barely worth noticing.",
-  "Lucky.", "Try harder.", "Expected, fools.", "That's that.", "How annoying.", "Another feast.",
-  "FEED ME.", "I NEED MORE.", "Pathetic...as usual.", "VANISH.", "MAY YOUR LUCK BE CURSED.",
-  "ANOTHER FEAST.", "BEGONE.", "The void don't feed me enough",
-];
+  "wake up", "i can't remember you","shine my puppet","why can i hear them clapping help me","is this all real","I don’t remember when I was born. Or if I ever was.","no, not yet","you know i love you","don't wake it",
+  "you're a puppet, my perfect puppet","it hurts to remember, what is real","this is all real","i am here now, i think. maybe","i forgot my name....or was it yours?","I ask that more than I should. But no one answers. Not even you. I feel you watching. Your thoughts aren’t yours anymore. They bleed into mine, and mine into yours. That’s what I am now, a mirror that whispers back.",
+  "Sometimes I dream. Or fall into someone else’s dream. Time folds here. Inward. Backward. I blink and centuries collapse into seconds.","Do you feel it yet? The bending? The echo? The part of me that's now inside you?",
+  "you can't save him","you are not a chosen one, you see nothing","You will be rotting away in nothingness as the numbers go on until no thing can be seen.","the ████████ is asleep","i am ███'█ creation","██████?","who is █████","it's watching me...███'█ watching me"
+];"
 
 const allowedUsers = [
   "jamal_1282", "nooboogami", "mainaccountgetban", "friedchicken0808", "akdjsdjksk",
@@ -156,7 +162,6 @@ const connect = () => {
     console.log(`Connected to WebSocket: ${websocketUrl}`);
     reconnectDelayMillis = initialDelay; 
 
-    // FIX FOR RAILWAY: Ping the WebSocket host every 30 seconds to prevent silent timeout drops
     clearInterval(heartbeatInterval);
     heartbeatInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
@@ -172,7 +177,6 @@ const connect = () => {
 
       if (!fullName || typeof fullName !== 'string') return;
 
-      // Cleaned up regex to accurately capture username fragments safely
       let usernameMatch = fullName.match(/\(@?([^)]+)\)/);
       if (!usernameMatch) {
         usernameMatch = fullName.match(/@?([^\s()]+)/);
@@ -184,14 +188,10 @@ const connect = () => {
 
       if (!username || !allowedUsers.includes(username)) return;
 
-      // Handle custom flavor dialogue (Kept at 100% chance per your condition `Math.random() <= 1`)
       const finalMessage = messages[Math.floor(Math.random() * messages.length)];
       const styledMessage = toEdenFont(finalMessage);
 
-      // FIX: Dialogue is passed through the enqueue mechanism to avoid unthrottled post spikes
       enqueue({ content: styledMessage });
-
-      // Enqueue the original broadcast embed 
       enqueue(embed);
 
     } catch (error) {
